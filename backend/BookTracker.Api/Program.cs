@@ -3,7 +3,10 @@ using BookTracker.Api.Data;
 using BookTracker.Api.Middleware;
 using BookTracker.Api.Repositories;
 using BookTracker.Api.Repositories.Interfaces;
+using BookTracker.Api.Services;
+using BookTracker.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
@@ -14,6 +17,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errorMessage = context.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .FirstOrDefault() ?? "Validation failed.";
+        return new BadRequestObjectResult(new { error = errorMessage, code = "VALIDATION_ERROR" });
+    };
+});
 
 // CORS — permissive for local development
 builder.Services.AddCors(options =>
@@ -46,7 +61,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-// TODO Story 1.3: Register IAuthService / AuthService
+// Services
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 // TODO Story 2.1: Register IBookRepository, IUserBookRepository
 // TODO Story 2.2: Register IBookService / BookService + IHttpClientFactory
 // TODO Story 2.4: Register IShelfService / ShelfService
