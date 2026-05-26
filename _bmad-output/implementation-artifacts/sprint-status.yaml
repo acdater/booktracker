@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-05-26T11:27:44+03:00"
-last_updated: "2026-05-26T11:29:45+03:00"
+last_updated: "2026-05-26T15:34:23+03:00"
 project: BookTracker
 project_key: NOKEY
 tracking_system: file-system
@@ -48,8 +48,8 @@ development_status:
   1-2-database-setup-user-domain-model: review
   1-3-user-registration-endpoint: review
   1-4-user-login-jwt-authentication: review
-  1-5-frontend-scaffold-design-system: backlog
-  1-6-authentication-pages-client-side-routing: backlog
+  1-5-frontend-scaffold-design-system: review
+  1-6-authentication-pages-client-side-routing: review
   epic-1-retrospective: optional
 
   # ── Epic 2: Book Catalog & Personal Shelf ─────────────────────────────────
