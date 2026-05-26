@@ -58,8 +58,8 @@ development_status:
   2-2-isbn-catalog-lookup-open-library-proxy: review
   2-3-book-catalog-creation-deduplication: review
   2-4-add-to-shelf-shelf-display-endpoints: review
-  2-5-shelf-layout-navbar-bookcard-component: backlog
-  2-6-add-book-flow-frontend: backlog
+  2-5-shelf-layout-navbar-bookcard-component: review
+  2-6-add-book-flow-frontend: review
   epic-2-retrospective: optional
 
   # ── Epic 3: Reading Lifecycle & Progress Tracking ─────────────────────────

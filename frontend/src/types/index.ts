@@ -32,6 +32,7 @@ export interface UserBook {
   startedAt: string | null;
   finishedAt: string | null;
   lastActivityAt: string;
+  readerCount: number;
 }
 
 export interface BookAction {

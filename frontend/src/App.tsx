@@ -11,7 +11,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar />
-      {children}
+      <main className="pb-16 sm:pb-0">{children}</main>
     </>
   );
 }
