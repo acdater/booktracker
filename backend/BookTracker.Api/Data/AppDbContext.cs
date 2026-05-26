@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<Book> Books => Set<Book>();
     public DbSet<UserBook> UserBooks => Set<UserBook>();
+    public DbSet<BookAction> BookActions => Set<BookAction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,6 +41,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .WithMany()
                   .HasForeignKey(u => u.BookId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<BookAction>(entity =>
+        {
+            entity.Property(a => a.ActionType).HasConversion<string>();
+
+            entity.HasOne(a => a.User)
+                  .WithMany()
+                  .HasForeignKey(a => a.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(a => a.UserBook)
+                  .WithMany()
+                  .HasForeignKey(a => a.UserBookId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(a => new { a.UserId, a.Timestamp })
+                  .HasDatabaseName("IX_BookActions_UserId_Timestamp");
+
+            entity.HasIndex(a => new { a.UserId, a.UserBookId })
+                  .HasDatabaseName("IX_BookActions_UserId_UserBookId");
         });
     }
 }

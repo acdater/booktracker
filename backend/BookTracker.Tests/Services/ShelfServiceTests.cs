@@ -166,4 +166,74 @@ public class ShelfServiceTests
         Assert.Single(result);
         Assert.Equal(0, result[0].ReaderCount);
     }
+
+    // ── UpdateStatusAsync ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateStatusAsync_ValidRestingToStarted_UpdatesStatusAndCreatesAction()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 7, book);
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        UserBook? capturedUb = null;
+        BookAction? capturedAction = null;
+        _userBookRepoMock
+            .Setup(r => r.UpdateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()))
+            .Callback<UserBook, BookAction>((u, a) => { capturedUb = u; capturedAction = a; })
+            .ReturnsAsync((UserBook u, BookAction _) => u);
+        _userBookRepoMock.Setup(r => r.GetReaderCountsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, int> { [10] = 1 });
+
+        var sut = CreateSut();
+        var result = await sut.UpdateStatusAsync(7, 1, "Started");
+
+        Assert.NotNull(capturedUb);
+        Assert.Equal(ReadingStatus.Started, capturedUb.Status);
+        Assert.NotNull(capturedUb.StartedAt);
+        Assert.True((DateTime.UtcNow - capturedUb.LastActivityAt).TotalSeconds < 5);
+
+        Assert.NotNull(capturedAction);
+        Assert.Equal(ActionType.StatusChange, capturedAction.ActionType);
+        Assert.Equal("Resting", capturedAction.OldValue);
+        Assert.Equal("Started", capturedAction.NewValue);
+        Assert.Equal(7, capturedAction.UserId);
+        Assert.Equal(1, capturedAction.UserBookId);
+
+        Assert.Equal("Started", result.Status);
+        _userBookRepoMock.Verify(r => r.UpdateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateStatusAsync_InvalidTransition_Throws400WithInvalidTransitionCode()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Abandoned;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.UpdateStatusAsync(7, 1, "Started"));
+
+        Assert.Equal(400, ex.StatusCode);
+        Assert.Equal("INVALID_TRANSITION", ex.ErrorCode);
+        _userBookRepoMock.Verify(r => r.UpdateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateStatusAsync_OwnershipMismatch_Throws403()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 99, book); // owned by user 99
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.UpdateStatusAsync(1, 1, "Started"));
+
+        Assert.Equal(403, ex.StatusCode);
+        Assert.Equal("FORBIDDEN", ex.ErrorCode);
+    }
 }

@@ -26,4 +26,12 @@ public class ShelfController(IShelfService shelfService) : ControllerBase
         var result = await shelfService.GetShelfAsync(userId);
         return Ok(result);
     }
+
+    [HttpPatch("{userBookId}/status")]
+    public async Task<IActionResult> UpdateStatus(int userBookId, [FromBody] UpdateStatusDto dto)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var result = await shelfService.UpdateStatusAsync(userId, userBookId, dto.Status);
+        return Ok(result);
+    }
 }

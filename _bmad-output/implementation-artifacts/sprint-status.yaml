@@ -63,8 +63,8 @@ development_status:
   epic-2-retrospective: optional
 
   # ── Epic 3: Reading Lifecycle & Progress Tracking ─────────────────────────
-  epic-3: backlog
-  3-1-bookaction-domain-model-status-transition-endpoint: backlog
+  epic-3: in-progress
+  3-1-bookaction-domain-model-status-transition-endpoint: review
   3-2-page-progress-update-auto-finish: backlog
   3-3-reading-journal-re-read-endpoints: backlog
   3-4-frontend-context-aware-action-buttons: backlog
