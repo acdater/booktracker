@@ -38,6 +38,21 @@ public class AuthService(IUserRepository userRepository, IConfiguration configur
         };
     }
 
+    public async Task<AuthResponse> LoginAsync(LoginDto dto)
+    {
+        var user = await userRepository.GetByEmailAsync(dto.Email);
+        if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            throw new ApiException(401, "Invalid credentials.", "INVALID_CREDENTIALS");
+
+        return new AuthResponse
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            Token = GenerateJwt(user)
+        };
+    }
+
     private string GenerateJwt(User user)
     {
         var secret = configuration["JWT__Secret"]!;

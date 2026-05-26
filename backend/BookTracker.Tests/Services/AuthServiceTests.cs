@@ -83,4 +83,55 @@ public class AuthServiceTests
         Assert.NotEqual("Password1!", captured!.PasswordHash);
         Assert.True(BCrypt.Net.BCrypt.Verify("Password1!", captured.PasswordHash));
     }
+
+    // ── Login tests ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task LoginAsync_ValidCredentials_ReturnsAuthResponse()
+    {
+        // Arrange — workFactor: 4 for fast tests
+        var hash = BCrypt.Net.BCrypt.HashPassword("Password1!", workFactor: 4);
+        var user = new User { Id = 5, Email = "alice@example.com", FirstName = "Alice", LastName = "Smith", PasswordHash = hash, DateOfBirth = DateTime.UtcNow };
+        _repoMock.Setup(r => r.GetByEmailAsync("alice@example.com")).ReturnsAsync(user);
+
+        var dto = new LoginDto { Email = "alice@example.com", Password = "Password1!" };
+
+        // Act
+        var result = await CreateSut().LoginAsync(dto);
+
+        // Assert
+        Assert.Equal(5, result.UserId);
+        Assert.Equal("alice@example.com", result.Email);
+        Assert.Equal("Alice", result.FirstName);
+        Assert.False(string.IsNullOrEmpty(result.Token));
+    }
+
+    [Fact]
+    public async Task LoginAsync_UnregisteredEmail_ThrowsApiException401()
+    {
+        // Arrange
+        _repoMock.Setup(r => r.GetByEmailAsync(It.IsAny<string>())).ReturnsAsync((User?)null);
+        var dto = new LoginDto { Email = "nobody@example.com", Password = "any" };
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<ApiException>(() => CreateSut().LoginAsync(dto));
+        Assert.Equal(401, ex.StatusCode);
+        Assert.Equal("INVALID_CREDENTIALS", ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WrongPassword_ThrowsApiException401()
+    {
+        // Arrange
+        var hash = BCrypt.Net.BCrypt.HashPassword("correct-password", workFactor: 4);
+        var user = new User { Id = 1, Email = "alice@example.com", FirstName = "Alice", LastName = "Smith", PasswordHash = hash, DateOfBirth = DateTime.UtcNow };
+        _repoMock.Setup(r => r.GetByEmailAsync("alice@example.com")).ReturnsAsync(user);
+
+        var dto = new LoginDto { Email = "alice@example.com", Password = "wrong-password" };
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<ApiException>(() => CreateSut().LoginAsync(dto));
+        Assert.Equal(401, ex.StatusCode);
+        Assert.Equal("INVALID_CREDENTIALS", ex.ErrorCode);
+    }
 }
