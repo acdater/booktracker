@@ -97,13 +97,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IUserBookRepository, UserBookRepository>();
 
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IShelfService, ShelfService>();
 
-// TODO Story 2.1: Register IBookRepository, IUserBookRepository
-// TODO Story 2.2: Register IBookService / BookService + IHttpClientFactory
-// TODO Story 2.4: Register IShelfService / ShelfService
+builder.Services.AddHttpClient("OpenLibrary", client =>
+{
+    client.BaseAddress = new Uri("https://openlibrary.org");
+    client.Timeout = TimeSpan.FromSeconds(3);
+});
+
+builder.Services.AddScoped<IBookService, BookService>();
+
 // TODO Story 4.1: Register IStatsService / StatsService
 
 var app = builder.Build();

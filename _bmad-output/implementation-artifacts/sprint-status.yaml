@@ -53,9 +53,9 @@ development_status:
   epic-1-retrospective: optional
 
   # ── Epic 2: Book Catalog & Personal Shelf ─────────────────────────────────
-  epic-2: backlog
-  2-1-book-userbook-domain-models: backlog
-  2-2-isbn-catalog-lookup-open-library-proxy: backlog
+  epic-2: in-progress
+  2-1-book-userbook-domain-models: review
+  2-2-isbn-catalog-lookup-open-library-proxy: review
   2-3-book-catalog-creation-deduplication: backlog
   2-4-add-to-shelf-shelf-display-endpoints: backlog
   2-5-shelf-layout-navbar-bookcard-component: backlog

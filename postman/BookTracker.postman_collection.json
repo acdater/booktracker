@@ -92,6 +92,27 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Lookup by ISBN",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/books/9780140328721",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "9780140328721"]
+            },
+            "description": "Look up a book by ISBN. Checks the local catalog first; falls back to Open Library. Returns BookResponse or null (HTTP 200) if not found anywhere. Requires JWT."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
