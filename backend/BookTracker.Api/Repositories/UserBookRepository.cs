@@ -39,4 +39,14 @@ public class UserBookRepository(AppDbContext db) : IUserBookRepository
         await _db.UserBooks
             .Where(ub => ub.UserId == userId && ub.BookId == bookId)
             .MaxAsync(ub => (int?)ub.ReadingNumber) ?? 0;
+
+    public async Task<Dictionary<int, int>> GetReaderCountsAsync(IEnumerable<int> bookIds)
+    {
+        var ids = bookIds.ToList();
+        return await _db.UserBooks
+            .Where(ub => ids.Contains(ub.BookId))
+            .GroupBy(ub => ub.BookId)
+            .Select(g => new { BookId = g.Key, Count = g.Select(ub => ub.UserId).Distinct().Count() })
+            .ToDictionaryAsync(x => x.BookId, x => x.Count);
+    }
 }

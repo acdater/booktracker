@@ -1,3 +1,4 @@
+using BookTracker.Api.DTOs.Books;
 using BookTracker.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,5 +15,12 @@ public class BooksController(IBookService bookService) : ControllerBase
     {
         var result = await bookService.LookupISBNAsync(isbn);
         return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateBook([FromBody] CreateBookDto dto)
+    {
+        var result = await bookService.CreateBookAsync(dto);
+        return result.IsNew ? StatusCode(201, result.Response) : Ok(result.Response);
     }
 }

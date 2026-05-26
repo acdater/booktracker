@@ -113,6 +113,48 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Shelf",
+      "item": [
+        {
+          "name": "Add to Shelf",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/shelf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shelf"]
+            },
+            "description": "Add a catalogued book to the authenticated user's shelf. Returns HTTP 201 with UserBookResponse (id, book, status, currentPages, readingNumber, startedAt, finishedAt, lastActivityAt, readerCount). Requires JWT."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Shelf",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/shelf",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "shelf"]
+            },
+            "description": "Get the authenticated user's shelf — most-recent UserBook per Book, ordered by lastActivityAt DESC. Returns array of UserBookResponse. Requires JWT."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

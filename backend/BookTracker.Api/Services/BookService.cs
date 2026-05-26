@@ -1,14 +1,22 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using BookTracker.Api.DTOs.Books;
+using BookTracker.Api.Exceptions;
 using BookTracker.Api.Models;
 using BookTracker.Api.Repositories.Interfaces;
 using BookTracker.Api.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookTracker.Api.Services;
 
 public class BookService(IBookRepository bookRepository, IHttpClientFactory httpClientFactory) : IBookService
 {
+    private static readonly HashSet<string> AllowedGenres = new()
+    {
+        "Fiction", "Non-Fiction", "Mystery", "Science Fiction", "Fantasy",
+        "Romance", "Biography & Memoir", "History", "Self-Help", "Other"
+    };
+
     public async Task<BookResponse?> LookupISBNAsync(string isbn)
     {
         isbn = isbn.Trim().ToUpperInvariant();
@@ -34,6 +42,35 @@ public class BookService(IBookRepository bookRepository, IHttpClientFactory http
         catch
         {
             return null;
+        }
+    }
+
+    public async Task<(BookResponse Response, bool IsNew)> CreateBookAsync(CreateBookDto dto)
+    {
+        if (!AllowedGenres.Contains(dto.Genre))
+            throw new ApiException(400,
+                $"Genre must be one of: {string.Join(", ", AllowedGenres)}.",
+                "VALIDATION_ERROR");
+
+        var book = new Book
+        {
+            ISBN = dto.ISBN,
+            Title = dto.Title,
+            Author = dto.Author,
+            TotalPages = dto.TotalPages,
+            Genre = dto.Genre,
+            CoverImageUrl = dto.CoverImageUrl
+        };
+
+        try
+        {
+            book = await bookRepository.CreateAsync(book);
+            return (MapToResponse(book), true);
+        }
+        catch (DbUpdateException)
+        {
+            var existing = await bookRepository.GetByISBNAsync(dto.ISBN);
+            return (MapToResponse(existing!), false);
         }
     }
 

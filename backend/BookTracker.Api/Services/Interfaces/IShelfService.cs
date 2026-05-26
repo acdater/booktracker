@@ -1,6 +1,9 @@
+using BookTracker.Api.DTOs.Shelf;
+
 namespace BookTracker.Api.Services.Interfaces;
 
 public interface IShelfService
 {
-    // Methods added in Story 2.4
+    Task<UserBookResponse> AddToShelfAsync(int userId, int bookId);
+    Task<List<UserBookResponse>> GetShelfAsync(int userId);
 }
