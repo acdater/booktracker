@@ -1,6 +1,10 @@
 using System.Text;
+using BookTracker.Api.Data;
 using BookTracker.Api.Middleware;
+using BookTracker.Api.Repositories;
+using BookTracker.Api.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 
@@ -35,8 +39,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// TODO Story 1.2: Register AppDbContext
-// TODO Story 1.2: Register IUserRepository / UserRepository
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+// Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 // TODO Story 1.3: Register IAuthService / AuthService
 // TODO Story 2.1: Register IBookRepository, IUserBookRepository
 // TODO Story 2.2: Register IBookService / BookService + IHttpClientFactory

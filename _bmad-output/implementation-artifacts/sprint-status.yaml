@@ -45,8 +45,8 @@ development_status:
   # ── Epic 1: Project Foundation & User Authentication ──────────────────────
   epic-1: in-progress
   1-1-backend-project-scaffold: review
-  1-2-database-setup-user-domain-model: ready-for-dev
-  1-3-user-registration-endpoint: backlog
+  1-2-database-setup-user-domain-model: review
+  1-3-user-registration-endpoint: ready-for-dev
   1-4-user-login-jwt-authentication: backlog
   1-5-frontend-scaffold-design-system: backlog
   1-6-authentication-pages-client-side-routing: backlog

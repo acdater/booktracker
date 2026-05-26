@@ -1,6 +1,6 @@
 # Story 1.2: Database Setup & User Domain Model
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,45 +20,45 @@ so that the authentication schema is in version control and can be applied with 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create User entity (AC: 1)
-  - [ ] Create `backend/BookTracker.Api/Models/User.cs`
-  - [ ] Properties: `Id` (int), `Email` (string), `PasswordHash` (string), `FirstName` (string), `LastName` (string), `DateOfBirth` (DateTime)
-  - [ ] Remove `Models/.gitkeep` — file now has real content
+- [x] Task 1: Create User entity (AC: 1)
+  - [x] Create `backend/BookTracker.Api/Models/User.cs`
+  - [x] Properties: `Id` (int), `Email` (string), `PasswordHash` (string), `FirstName` (string), `LastName` (string), `DateOfBirth` (DateTime)
+  - [x] Remove `Models/.gitkeep` — file now has real content
 
-- [ ] Task 2: Create AppDbContext (AC: 2)
-  - [ ] Create `backend/BookTracker.Api/Data/AppDbContext.cs`
-  - [ ] Inherit `DbContext`; use primary constructor `(DbContextOptions<AppDbContext> options)`
-  - [ ] Expose `DbSet<User> Users => Set<User>()`
-  - [ ] Override `OnModelCreating` — configure `IX_Users_Email` unique index on `User.Email`
+- [x] Task 2: Create AppDbContext (AC: 2)
+  - [x] Create `backend/BookTracker.Api/Data/AppDbContext.cs`
+  - [x] Inherit `DbContext`; use primary constructor `(DbContextOptions<AppDbContext> options)`
+  - [x] Expose `DbSet<User> Users => Set<User>()`
+  - [x] Override `OnModelCreating` — configure `IX_Users_Email` unique index on `User.Email`
 
-- [ ] Task 3: Create IUserRepository interface (AC: 3)
-  - [ ] Create `backend/BookTracker.Api/Repositories/Interfaces/IUserRepository.cs`
-  - [ ] Declare `Task<User?> GetByEmailAsync(string email)`
-  - [ ] Declare `Task<User> CreateAsync(User user)`
-  - [ ] Remove `Repositories/Interfaces/.gitkeep`
+- [x] Task 3: Create IUserRepository interface (AC: 3)
+  - [x] Create `backend/BookTracker.Api/Repositories/Interfaces/IUserRepository.cs`
+  - [x] Declare `Task<User?> GetByEmailAsync(string email)`
+  - [x] Declare `Task<User> CreateAsync(User user)`
+  - [x] Remove `Repositories/Interfaces/.gitkeep`
 
-- [ ] Task 4: Create UserRepository implementation (AC: 4)
-  - [ ] Create `backend/BookTracker.Api/Repositories/UserRepository.cs`
-  - [ ] Primary constructor: inject `AppDbContext context`
-  - [ ] `GetByEmailAsync`: `context.Users.FirstOrDefaultAsync(u => u.Email == email)`
-  - [ ] `CreateAsync`: `context.Users.Add(user)` → `await context.SaveChangesAsync()` → return user
+- [x] Task 4: Create UserRepository implementation (AC: 4)
+  - [x] Create `backend/BookTracker.Api/Repositories/UserRepository.cs`
+  - [x] Primary constructor: inject `AppDbContext context`
+  - [x] `GetByEmailAsync`: `context.Users.FirstOrDefaultAsync(u => u.Email == email)`
+  - [x] `CreateAsync`: `context.Users.Add(user)` → `await context.SaveChangesAsync()` → return user
 
-- [ ] Task 5: Wire DI in Program.cs (AC: 5)
-  - [ ] Add `using Microsoft.EntityFrameworkCore;` to Program.cs imports
-  - [ ] Add `using BookTracker.Api.Data;` and `using BookTracker.Api.Repositories;` and `using BookTracker.Api.Repositories.Interfaces;`
-  - [ ] Replace `// TODO Story 1.2: Register AppDbContext` with: `builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));`
-  - [ ] Replace `// TODO Story 1.2: Register IUserRepository / UserRepository` with: `builder.Services.AddScoped<IUserRepository, UserRepository>();`
+- [x] Task 5: Wire DI in Program.cs (AC: 5)
+  - [x] Add `using Microsoft.EntityFrameworkCore;` to Program.cs imports
+  - [x] Add `using BookTracker.Api.Data;` and `using BookTracker.Api.Repositories;` and `using BookTracker.Api.Repositories.Interfaces;`
+  - [x] Replace `// TODO Story 1.2: Register AppDbContext` with: `builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));`
+  - [x] Replace `// TODO Story 1.2: Register IUserRepository / UserRepository` with: `builder.Services.AddScoped<IUserRepository, UserRepository>();`
 
-- [ ] Task 6: Generate and apply EF Core migration (AC: 6)
-  - [ ] Confirm `dotnet user-secrets set "ConnectionStrings__Default" "..."` is set (prerequisite)
-  - [ ] From `backend/BookTracker.Api/`: run `dotnet ef migrations add InitialCreate`
-  - [ ] Verify migration file appears in `Data/Migrations/` (two files: `*_InitialCreate.cs` + snapshot)
-  - [ ] Run `dotnet ef database update` — confirm `Users` table created in PostgreSQL
-  - [ ] Verify columns are PascalCase: `Id`, `Email`, `PasswordHash`, `FirstName`, `LastName`, `DateOfBirth`
+- [x] Task 6: Generate and apply EF Core migration (AC: 6)
+  - [x] Confirm `dotnet user-secrets set "ConnectionStrings__Default" "..."` is set (prerequisite)
+  - [x] From `backend/BookTracker.Api/`: run `dotnet ef migrations add InitialCreate`
+  - [x] Verify migration file appears in `Data/Migrations/` (two files: `*_InitialCreate.cs` + snapshot)
+  - [x] Run `dotnet ef database update` — confirm `Users` table created in PostgreSQL
+  - [x] Verify columns are PascalCase: `Id`, `Email`, `PasswordHash`, `FirstName`, `LastName`, `DateOfBirth`
 
-- [ ] Task 7: Verify no regressions (AC: 7)
-  - [ ] Run `dotnet test` from repo root — must pass (1 sample test green)
-  - [ ] Run `dotnet build` — 0 errors, 0 warnings about missing types
+- [x] Task 7: Verify no regressions (AC: 7)
+  - [x] Run `dotnet test` from repo root — must pass (1 sample test green)
+  - [x] Run `dotnet build` — 0 errors, 0 warnings about missing types
 
 ## Dev Notes
 
@@ -264,10 +264,35 @@ Files being deleted (replaced by real files):
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Sonnet 4.6
 
 ### Debug Log References
 
+- `dotnet user-secrets init` required — `UserSecretsId` was not present in `.csproj`; initialized and connection string set.
+- `dotnet ef database update` failed with empty connection string when relying on user-secrets alone; used `--connection` flag to pass connection string directly to EF tools.
+- `booktracker` database did not exist; `dotnet ef database update` auto-created it before applying the migration.
+- EF Core version conflict warnings (10.0.4 vs 10.0.8) in test project are pre-existing (Npgsql 10.0.1 bundles EF Core 10.0.4); tests still pass, not caused by this story.
+- No `Models/.gitkeep` or `Repositories/.gitkeep` at root level — only `Repositories/Interfaces/.gitkeep` removed as per Task 3.
+
 ### Completion Notes List
 
+- AC1: `User.cs` created at `backend/BookTracker.Api/Models/User.cs` with all 6 properties. No attributes added — EF Core default naming produces PascalCase.
+- AC2: `AppDbContext.cs` created with primary constructor, `DbSet<User> Users => Set<User>()`, and `IX_Users_Email` unique index configured in `OnModelCreating`.
+- AC3: `IUserRepository.cs` created with `GetByEmailAsync` and `CreateAsync` signatures. `Repositories/Interfaces/.gitkeep` removed.
+- AC4: `UserRepository.cs` created with primary constructor injecting `AppDbContext`. `GetByEmailAsync` uses `FirstOrDefaultAsync`; `CreateAsync` adds, saves, and returns entity.
+- AC5: `Program.cs` updated — 4 using directives added, both TODO Story 1.2 comments replaced with `AddDbContext<AppDbContext>` (Npgsql) and `AddScoped<IUserRepository, UserRepository>`.
+- AC6: Migration `20260526090914_InitialCreate` generated in `Data/Migrations/`. `dotnet ef database update` created `booktracker` database and `Users` table with PascalCase columns (`Id`, `Email`, `PasswordHash`, `FirstName`, `LastName`, `DateOfBirth`) and `IX_Users_Email` unique index.
+- AC7: `dotnet test` passes — Failed: 0, Passed: 1. `dotnet build` succeeds with 0 errors.
+
 ### File List
+
+- backend/BookTracker.Api/Models/User.cs (new)
+- backend/BookTracker.Api/Data/AppDbContext.cs (new)
+- backend/BookTracker.Api/Repositories/Interfaces/IUserRepository.cs (new)
+- backend/BookTracker.Api/Repositories/UserRepository.cs (new)
+- backend/BookTracker.Api/Program.cs (modified)
+- backend/BookTracker.Api/BookTracker.Api.csproj (modified — UserSecretsId added)
+- backend/BookTracker.Api/Data/Migrations/20260526090914_InitialCreate.cs (generated)
+- backend/BookTracker.Api/Data/Migrations/20260526090914_InitialCreate.Designer.cs (generated)
+- backend/BookTracker.Api/Data/Migrations/AppDbContextModelSnapshot.cs (generated)
+- backend/BookTracker.Api/Repositories/Interfaces/.gitkeep (deleted)
