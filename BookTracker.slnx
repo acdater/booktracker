@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/BookTracker.Api/BookTracker.Api.csproj" />
+    <Project Path="backend/BookTracker.Tests/BookTracker.Tests.csproj" />
+  </Folder>
+</Solution>

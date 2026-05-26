@@ -1,0 +1,65 @@
+# ── .NET ──────────────────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# User secrets (dotnet user-secrets — never commit)
+# Stored in %APPDATA%\Microsoft\UserSecrets\ so not in repo, but safety net:
+secrets.json
+appsettings.Production.json
+
+# EF Core migration bundle
+efbundle
+efbundle.exe
+
+# Publish output
+publish/
+[Pp]ublish/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/packages/
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ── Node / React ──────────────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+
+# Local env overrides (never commit real secrets)
+.env.local
+.env.*.local
+.env.production
+
+# Vite cache
+.cache/
+
+# ── OS & IDE ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+*.iml
+*.code-workspace
+
+# ── BMad personal overrides (user-specific toml files) ────────────────────────
+**/*.user.toml
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/

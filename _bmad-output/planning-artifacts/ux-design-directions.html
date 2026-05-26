@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookTracker — Design Directions</title>
+  <style>
+    :root {
+      --bg: #FAF6F0;
+      --surface: #FFFFFF;
+      --surface-alt: #F3EEE7;
+      --border: #E2D9CE;
+      --accent: #6B7555;
+      --accent-hover: #556044;
+      --accent-subtle: #EBF0E6;
+      --text: #1C1A18;
+      --text-secondary: #6B6259;
+      --text-disabled: #ADA49A;
+      --error: #A84040;
+      --error-bg: #FDF0EF;
+      --celebration: #C4874A;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --shadow-rest: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(180deg, #fdfaf6 0%, var(--bg) 22%, #f7f1e9 100%);
+      color: var(--text);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .page-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(250, 246, 240, 0.9);
+      border-bottom: 1px solid rgba(226, 217, 206, 0.9);
+    }
+    .page-nav-inner,
+    .page-header,
+    .direction {
+      width: min(1280px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+    .page-nav-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0;
+    }
+    .brand {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .jump-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .jump-links a {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.7);
+      color: var(--text-secondary);
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    .jump-links a:hover {
+      background: var(--accent-subtle);
+      border-color: rgba(107,117,85,0.35);
+      color: var(--accent-hover);
+    }
+
+    .page-header {
+      padding: 36px 0 28px;
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .direction {
+      padding: 24px 0 52px;
+    }
+    .direction-head {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .direction-head h2 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+    .direction-head p {
+      margin: 0;
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 760px;
+    }
+
+    .device-frame {
+      position: relative;
+      margin: 0 auto;
+      background: #f7f4ef;
+      border: 1px solid #d7cec2;
+      border-radius: 28px;
+      box-shadow: 0 18px 50px rgba(62, 43, 20, 0.08);
+      overflow: hidden;
+    }
+    .desktop-frame {
+      width: min(100%, 1200px);
+      padding: 18px;
+    }
+    .mobile-frame {
+      width: 375px;
+      max-width: 100%;
+      padding: 14px;
+      border-radius: 34px;
+    }
+    .chrome-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px 14px;
+      color: var(--text-disabled);
+      font-size: 12px;
+    }
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d6cdc1;
+      display: block;
+    }
+    .viewport {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: var(--bg);
+    }
+
+    .app {
+      min-height: 100%;
+      background: var(--bg);
+    }
+    .app.desktop { padding: 22px; }
+    .app.mobile { padding: 18px 16px 96px; }
+
+    .stats-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      border: 1px solid rgba(226,217,206,0.9);
+      background: var(--surface-alt);
+      color: var(--text-secondary);
+      border-radius: 14px;
+      padding: 0 18px;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+    }
+    .stats-strip strong { color: var(--text); font-weight: 600; }
+    .stats-strip.slim { height: 40px; }
+    .stats-strip.prominent {
+      height: 56px;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .stats-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .section-label {
+      margin: 18px 0 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .book-grid {
+      display: grid;
+    }
+    .airy-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .compact-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .hero-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .book-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-rest);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .book-card:hover,
+    .book-card.hovered {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+    .book-card.minimal {
+      padding: 12px 12px 14px;
+    }
+    .book-card.detailed {
+      padding: 10px 10px 12px;
+    }
+    .book-card.small {
+      padding: 10px;
+    }
+
+    .cover {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.72);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      background-size: cover;
+      background-position: center;
+    }
+    .cover::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(0,0,0,0.12) 100%);
+    }
+    .cover span {
+      position: relative;
+      font-size: clamp(38px, 6vw, 58px);
+    }
+    .progress-strip {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: rgba(255,255,255,0.28);
+    }
+    .progress-strip::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--progress, 0%);
+      background: var(--accent);
+    }
+
+    .meta {
+      padding-top: 12px;
+    }
+    .book-title {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .author,
+    .page-count {
+      margin: 4px 0 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+    }
+    .compact-info {
+      display: grid;
+      gap: 2px;
+    }
+
+    .hero-card {
+      display: grid;
+      grid-template-columns: 116px 1fr;
+      gap: 14px;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-rest);
+      margin-top: 16px;
+    }
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+    .hero-kicker {
+      margin: 0 0 4px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .hero-card h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+    .hero-card .author {
+      margin-top: 6px;
+      font-size: 13px;
+    }
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .hero-progress-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent-subtle);
+      overflow: hidden;
+      border: 1px solid rgba(107,117,85,0.12);
+    }
+    .hero-progress-fill {
+      height: 100%;
+      width: 44%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+    }
+
+    .popup-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(28,26,24,0.18);
+      padding: 24px;
+    }
+    .popup {
+      width: 290px;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+      border: 1px solid rgba(226,217,206,0.85);
+      padding: 16px;
+    }
+    .popup-head {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .cover-thumb {
+      aspect-ratio: 2 / 3;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.78);
+      font-weight: 700;
+      background: linear-gradient(180deg, #f0d3b9 0%, #e8c4a0 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .cover-thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(0,0,0,0.1));
+    }
+    .cover-thumb span { position: relative; }
+    .popup-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .popup-sub {
+      margin: 4px 0 0;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .stepper {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .step-btn,
+    .update-btn {
+      border: 0;
+      font: inherit;
+    }
+    .step-btn {
+      height: 40px;
+      border-radius: 12px;
+      background: var(--surface-alt);
+      color: var(--text);
+      font-size: 20px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+    }
+    .step-value {
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fcfaf7;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .popup-actions {
+      display: grid;
+      gap: 10px;
+    }
+    .update-btn {
+      height: 42px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .cancel-link {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .mobile-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .mobile-top h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+    .mobile-top p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--accent-subtle);
+      color: var(--accent-hover);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .bottom-nav {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 10px 6px;
+    }
+    .nav-item {
+      display: grid;
+      justify-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-disabled);
+    }
+    .nav-item .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      font-size: 15px;
+    }
+    .nav-item.active { color: var(--accent); font-weight: 600; }
+    .nav-item.active .icon { background: var(--accent-subtle); }
+
+    .cover-midnight { background-image: linear-gradient(180deg, #8eaea1 0%, #7B9E8F 56%, #647f74 100%); }
+    .cover-dune { background-image: linear-gradient(180deg, #d2b87e 0%, #C4A35A 54%, #a88542 100%); }
+    .cover-hailmary { background-image: linear-gradient(180deg, #7692b3 0%, #5A7A9E 55%, #486581 100%); }
+    .cover-klara { background-image: linear-gradient(180deg, #efd6bc 0%, #E8C4A0 56%, #d5aa7e 100%); }
+    .cover-name { background-image: linear-gradient(180deg, #9c83ae 0%, #8B6E9E 54%, #735686 100%); }
+    .cover-sapiens { background-image: linear-gradient(180deg, #b18f6f 0%, #9E7B5A 56%, #866549 100%); }
+
+    @media (max-width: 900px) {
+      .page-nav-inner { flex-direction: column; align-items: flex-start; }
+      .airy-grid,
+      .compact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .page-header,
+      .page-nav-inner,
+      .direction { width: min(100%, calc(100% - 24px)); }
+      h1 { font-size: 30px; }
+      .desktop-frame { padding: 12px; }
+      .app.desktop { padding: 16px; }
+      .airy-grid,
+      .compact-grid,
+      .hero-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="page-nav">
+    <div class="page-nav-inner">
+      <div class="brand">BookTracker — Design Directions</div>
+      <div class="jump-links">
+        <a href="#direction-1">Direction 1</a>
+        <a href="#direction-2">Direction 2</a>
+        <a href="#direction-3">Direction 3</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="page-header">
+    <p class="eyebrow">UX design showcase</p>
+    <h1>BookTracker — Design Directions</h1>
+    <p class="subtitle">Step 9 of UX Design Specification · Alexei · 2026-05-26</p>
+  </header>
+
+  <section class="direction" id="direction-1">
+    <div class="direction-head">
+      <h2>Direction 1 — Airy Grid</h2>
+      <p>A spacious desktop shelf that prioritizes beautiful covers, calm pacing, and a soft at-a-glance sense of progress.</p>
+    </div>
+    <div class="device-frame desktop-frame">
+      <div class="chrome-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div>Desktop mockup · 1200px</div>
+      </div>
+      <div class="viewport">
+        <div class="app desktop">
+          <div class="stats-strip slim"><strong>📚 3 in progress</strong><span>|</span><span>847 pages this month</span></div>
+          <div class="section-label">Shelf</div>
+          <div class="book-grid airy-grid">
+            <article class="book-card minimal hovered">
+              <div class="cover cover-midnight" style="--progress:44%;"><span>M</span><div class="progress-strip"></div></div>
+              <div class="meta"><p class="book-title">The Midnight Library</p></div>
+            </article>
+            <article class="book-card minimal">
+              <div class="cover cover-dune" style="--progress:0%;"><span>D</span><div class="progress-strip"></div></div>
+              <div class="meta"><p class="book-title">Dune</p></div>
+            </article>
+            <article class="book-card minimal">
+              <div class="cover cover-hailmary" style="--progress:100%;"><span>P</span><div class="progress-strip"></div></div>
+              <div class="meta"><p class="book-title">Project Hail Mary</p></div>
+            </article>
+            <article class="book-card minimal">
+              <div class="cover cover-klara" style="--progress:29%;"><span>K</span><div class="progress-strip"></div></div>
+              <div class="meta"><p class="book-title">Klara and the Sun</p></div>
+            </article>
+            <article class="book-card minimal">
+              <div class="cover cover-name" style="--progress:0%;"><span>N</span><div class="progress-strip"></div></div>
+              <div class="meta"><p class="book-title">The Name of the Wind</p></div>
+            </article>
+            <article class="book-card minimal">
+              <div class="cover cover-sapiens" style="--progress:56%;"><span>S</span><div class="progress-strip"></div></div>
+              <div class="meta"><p class="book-title">Sapiens</p></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="direction" id="direction-2">
+    <div class="direction-head">
+      <h2>Direction 2 — Compact Grid</h2>
+      <p>A denser desktop layout that keeps key metadata and quick progress editing visible for readers who want more control at a glance.</p>
+    </div>
+    <div class="device-frame desktop-frame">
+      <div class="chrome-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div>Desktop mockup · 1200px</div>
+      </div>
+      <div class="viewport">
+        <div class="app desktop" style="position:relative;">
+          <div class="stats-strip prominent">
+            <div class="stats-group"><strong>📚 3 in progress</strong><span>|</span><span>847 pages this month</span></div>
+            <div class="stats-group"><span>2 finished</span><span>|</span><span>Current streak 6 days</span></div>
+          </div>
+          <div class="section-label">Shelf</div>
+          <div class="book-grid compact-grid">
+            <article class="book-card detailed hovered">
+              <div class="cover cover-midnight" style="--progress:44%;"><span>M</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">The Midnight Library</p>
+                <p class="author">Matt Haig</p>
+                <p class="page-count">142 / 320</p>
+              </div>
+            </article>
+            <article class="book-card detailed">
+              <div class="cover cover-dune" style="--progress:0%;"><span>D</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Dune</p>
+                <p class="author">Frank Herbert</p>
+                <p class="page-count">0 / 412</p>
+              </div>
+            </article>
+            <article class="book-card detailed">
+              <div class="cover cover-hailmary" style="--progress:100%;"><span>P</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Project Hail Mary</p>
+                <p class="author">Andy Weir</p>
+                <p class="page-count">412 / 412</p>
+              </div>
+            </article>
+            <article class="book-card detailed" style="position:relative; z-index:1;">
+              <div class="cover cover-klara" style="--progress:29%;"><span>K</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Klara and the Sun</p>
+                <p class="author">Kazuo Ishiguro</p>
+                <p class="page-count">89 / 307</p>
+              </div>
+            </article>
+            <article class="book-card detailed">
+              <div class="cover cover-name" style="--progress:0%;"><span>N</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">The Name of the Wind</p>
+                <p class="author">Patrick Rothfuss</p>
+                <p class="page-count">0 / 662</p>
+              </div>
+            </article>
+            <article class="book-card detailed">
+              <div class="cover cover-sapiens" style="--progress:56%;"><span>S</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Sapiens</p>
+                <p class="author">Yuval Noah Harari</p>
+                <p class="page-count">250 / 443</p>
+              </div>
+            </article>
+          </div>
+          <div class="popup-overlay">
+            <div class="popup">
+              <div class="popup-head">
+                <div class="cover-thumb"><span>K</span></div>
+                <div>
+                  <p class="popup-title">Klara and the Sun</p>
+                  <p class="popup-sub">Update current page</p>
+                </div>
+              </div>
+              <div class="stepper">
+                <div class="step-btn">−</div>
+                <div class="step-value">89</div>
+                <div class="step-btn">+</div>
+              </div>
+              <div class="popup-actions">
+                <button class="update-btn">Update</button>
+                <a class="cancel-link" href="#direction-2">Cancel</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="direction" id="direction-3">
+    <div class="direction-head">
+      <h2>Direction 3 — Hero + Grid</h2>
+      <p>A mobile-first returning-reader view that foregrounds the current book, then lets the rest of the shelf fall into a tidy supporting grid below.</p>
+    </div>
+    <div class="device-frame mobile-frame">
+      <div class="chrome-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div>Mobile mockup · 375px</div>
+      </div>
+      <div class="viewport">
+        <div class="app mobile" style="position:relative; min-height:812px;">
+          <div class="mobile-top">
+            <div>
+              <h3>Your Shelf</h3>
+              <p>Pick up where you left off.</p>
+            </div>
+            <div class="chip">📚 3 in progress</div>
+          </div>
+          <div class="stats-strip prominent" style="height:48px; padding:0 14px; font-size:12px;">
+            <div class="stats-group"><strong>📚 3 in progress</strong><span>|</span><span>847 pages this month</span></div>
+          </div>
+
+          <article class="hero-card">
+            <div class="cover cover-midnight" style="--progress:44%;"><span>M</span><div class="progress-strip"></div></div>
+            <div class="hero-copy">
+              <div>
+                <p class="hero-kicker">Recently updated</p>
+                <h3>The Midnight Library</h3>
+                <p class="author">Matt Haig</p>
+              </div>
+              <div>
+                <div class="hero-stats"><span>142 / 320 pages</span><span>44%</span></div>
+                <div class="hero-progress-track"><div class="hero-progress-fill"></div></div>
+              </div>
+            </div>
+          </article>
+
+          <div class="section-label" style="margin-top:18px;">More on your shelf</div>
+          <div class="book-grid hero-grid">
+            <article class="book-card small">
+              <div class="cover cover-klara" style="--progress:29%;"><span>K</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Klara and the Sun</p>
+                <p class="author">Kazuo Ishiguro</p>
+                <p class="page-count">89 / 307</p>
+              </div>
+            </article>
+            <article class="book-card small">
+              <div class="cover cover-sapiens" style="--progress:56%;"><span>S</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Sapiens</p>
+                <p class="author">Yuval Noah Harari</p>
+                <p class="page-count">250 / 443</p>
+              </div>
+            </article>
+            <article class="book-card small">
+              <div class="cover cover-dune" style="--progress:0%;"><span>D</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Dune</p>
+                <p class="author">Frank Herbert</p>
+                <p class="page-count">0 / 412</p>
+              </div>
+            </article>
+            <article class="book-card small">
+              <div class="cover cover-hailmary" style="--progress:100%;"><span>P</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">Project Hail Mary</p>
+                <p class="author">Andy Weir</p>
+                <p class="page-count">412 / 412</p>
+              </div>
+            </article>
+            <article class="book-card small">
+              <div class="cover cover-name" style="--progress:0%;"><span>N</span><div class="progress-strip"></div></div>
+              <div class="meta compact-info">
+                <p class="book-title">The Name of the Wind</p>
+                <p class="author">Patrick Rothfuss</p>
+                <p class="page-count">0 / 662</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item active"><div class="icon">📚</div><div>Shelf</div></div>
+            <div class="nav-item"><div class="icon">＋</div><div>Add</div></div>
+            <div class="nav-item"><div class="icon">✎</div><div>Journal</div></div>
+            <div class="nav-item"><div class="icon">◔</div><div>Stats</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>
