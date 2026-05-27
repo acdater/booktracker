@@ -35,6 +35,14 @@ public class UserBookRepository(AppDbContext db) : IUserBookRepository
         return ub;
     }
 
+    public async Task<UserBook> CreateWithActionAsync(UserBook ub, BookAction action)
+    {
+        _db.UserBooks.Add(ub);
+        _db.BookActions.Add(action);
+        await _db.SaveChangesAsync();
+        return ub;
+    }
+
     public async Task<UserBook> UpdateWithActionAsync(UserBook ub, BookAction action)
     {
         _db.UserBooks.Update(ub);

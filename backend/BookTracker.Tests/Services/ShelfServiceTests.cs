@@ -403,23 +403,29 @@ public class ShelfServiceTests
         _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
         _userBookRepoMock.Setup(r => r.GetMaxReadingNumberAsync(7, book.Id)).ReturnsAsync(1);
 
-        UserBook? captured = null;
-        _userBookRepoMock.Setup(r => r.CreateAsync(It.IsAny<UserBook>()))
-            .Callback<UserBook>(u => captured = u)
-            .ReturnsAsync((UserBook u) => u);
+        UserBook? capturedUb = null;
+        BookAction? capturedAction = null;
+        _userBookRepoMock.Setup(r => r.CreateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()))
+            .Callback<UserBook, BookAction>((u, a) => { capturedUb = u; capturedAction = a; })
+            .ReturnsAsync((UserBook u, BookAction _) => u);
         _userBookRepoMock.Setup(r => r.GetReaderCountsAsync(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync(new Dictionary<int, int> { [book.Id] = 1 });
 
         var sut = CreateSut();
         var result = await sut.RereadAsync(7, 1);
 
-        Assert.NotNull(captured);
-        Assert.Equal(ReadingStatus.Resting, captured.Status);
-        Assert.Equal(0, captured.CurrentPages);
-        Assert.Equal(2, captured.ReadingNumber); // MAX(1) + 1
-        Assert.Null(captured.StartedAt);
-        Assert.Null(captured.FinishedAt);
-        Assert.Equal("Resting", result.Status);
+        Assert.NotNull(capturedUb);
+        Assert.Equal(ReadingStatus.Started, capturedUb.Status);
+        Assert.Equal(0, capturedUb.CurrentPages);
+        Assert.Equal(2, capturedUb.ReadingNumber); // MAX(1) + 1
+        Assert.NotNull(capturedUb.StartedAt);
+        Assert.Null(capturedUb.FinishedAt);
+        Assert.Equal("Started", result.Status);
+
+        Assert.NotNull(capturedAction);
+        Assert.Equal(ActionType.StatusChange, capturedAction.ActionType);
+        Assert.Equal("Resting", capturedAction.OldValue);
+        Assert.Equal("Started", capturedAction.NewValue);
     }
 
     [Fact]

@@ -194,15 +194,25 @@ public class ShelfService(
         {
             UserId = userId,
             BookId = ub.BookId,
-            Status = ReadingStatus.Resting,
+            Status = ReadingStatus.Started,
             CurrentPages = 0,
             ReadingNumber = maxReadingNumber + 1,
-            StartedAt = null,
+            StartedAt = DateTime.UtcNow,
             FinishedAt = null,
             LastActivityAt = DateTime.UtcNow
         };
 
-        newUb = await _userBookRepository.CreateAsync(newUb);
+        var startAction = new BookAction
+        {
+            UserId = userId,
+            UserBook = newUb,
+            ActionType = ActionType.StatusChange,
+            OldValue = "Resting",
+            NewValue = "Started",
+            Timestamp = DateTime.UtcNow
+        };
+
+        newUb = await _userBookRepository.CreateWithActionAsync(newUb, startAction);
         newUb.Book = ub.Book;
 
         var counts = await _userBookRepository.GetReaderCountsAsync([newUb.BookId]);
