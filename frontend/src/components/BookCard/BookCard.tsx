@@ -21,9 +21,10 @@ interface BookCardProps {
   userBook: UserBook;
   onClick?: () => void;
   onRefetch?: () => void;
+  onJournal?: () => void;
 }
 
-export function BookCard({ userBook, onClick, onRefetch }: BookCardProps) {
+export function BookCard({ userBook, onClick, onRefetch, onJournal }: BookCardProps) {
   const { book, status, currentPages, readerCount } = userBook;
   const progressPct = book.totalPages > 0 ? (currentPages / book.totalPages) * 100 : 0;
   const [actionError, setActionError] = useState<string | null>(null);
@@ -115,6 +116,16 @@ export function BookCard({ userBook, onClick, onRefetch }: BookCardProps) {
         {actionError && (
           <p className="text-error text-[13px] mt-1">{actionError}</p>
         )}
+        {/* Journal trigger — available for any status */}
+        <button
+          type="button"
+          onClick={onJournal}
+          className="w-full mt-1 py-1 text-[12px] text-text-secondary hover:text-text-primary
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1
+            rounded"
+        >
+          Journal
+        </button>
       </div>
     </article>
   );

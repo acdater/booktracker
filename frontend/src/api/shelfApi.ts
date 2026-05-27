@@ -1,5 +1,5 @@
 import { fetchJson } from './client';
-import type { UserBook } from '../types';
+import type { UserBook, BookAction } from '../types';
 
 export const getShelf = () => fetchJson<UserBook[]>('/api/shelf');
 
@@ -20,3 +20,6 @@ export const updatePages = (userBookId: number, pages: number) =>
     method: 'PATCH',
     body: JSON.stringify({ pages }),
   });
+
+export const getJournal = (userBookId: number) =>
+  fetchJson<BookAction[]>(`/api/shelf/${userBookId}/journal`);

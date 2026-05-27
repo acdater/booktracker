@@ -114,6 +114,7 @@ builder.Services.AddHttpClient("OpenLibrary", client =>
 builder.Services.AddScoped<IBookService, BookService>();
 
 // TODO Story 4.1: Register IStatsService / StatsService
+builder.Services.AddScoped<IStatsService, StatsService>();
 
 var app = builder.Build();
 

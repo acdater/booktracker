@@ -1,4 +1,5 @@
 using BookTracker.Api.Models;
+using BookTracker.Api.Models.Enums;
 
 namespace BookTracker.Api.Repositories.Interfaces;
 
@@ -13,4 +14,6 @@ public interface IUserBookRepository
     Task<UserBook> UpdateWithActionsAsync(UserBook ub, IReadOnlyList<BookAction> actions);
     Task<int> GetMaxReadingNumberAsync(int userId, int bookId);
     Task<Dictionary<int, int>> GetReaderCountsAsync(IEnumerable<int> bookIds);
+    Task<int> CountAllAsync(int userId);
+    Task<int> CountByStatusAsync(int userId, ReadingStatus status);
 }

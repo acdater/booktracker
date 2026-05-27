@@ -1,5 +1,6 @@
 using BookTracker.Api.Data;
 using BookTracker.Api.Models;
+using BookTracker.Api.Models.Enums;
 using BookTracker.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -73,4 +74,14 @@ public class UserBookRepository(AppDbContext db) : IUserBookRepository
             .Select(g => new { BookId = g.Key, Count = g.Select(ub => ub.UserId).Distinct().Count() })
             .ToDictionaryAsync(x => x.BookId, x => x.Count);
     }
+
+    public async Task<int> CountAllAsync(int userId) =>
+        await _db.UserBooks
+            .Where(ub => ub.UserId == userId)
+            .CountAsync();
+
+    public async Task<int> CountByStatusAsync(int userId, ReadingStatus status) =>
+        await _db.UserBooks
+            .Where(ub => ub.UserId == userId && ub.Status == status)
+            .CountAsync();
 }

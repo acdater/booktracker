@@ -1,5 +1,6 @@
 using BookTracker.Api.Data;
 using BookTracker.Api.Models;
+using BookTracker.Api.Models.Enums;
 using BookTracker.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,5 +27,28 @@ public class BookActionRepository(AppDbContext db) : IBookActionRepository
             .Include(a => a.UserBook)
             .Where(a => a.UserId == userId && a.UserBook.BookId == bookId)
             .OrderByDescending(a => a.Timestamp)
+            .ToListAsync();
+
+    public async Task<List<BookAction>> GetPageUpdatesInMonthAsync(int userId, int year, int month) =>
+        await _db.BookActions
+            .Where(a => a.UserId == userId
+                && a.ActionType == ActionType.PageUpdate
+                && a.Timestamp.Year == year
+                && a.Timestamp.Month == month)
+            .ToListAsync();
+
+    public async Task<List<BookAction>> GetStatusChangesCompletedSinceAsync(int userId, DateTime since) =>
+        await _db.BookActions
+            .Where(a => a.UserId == userId
+                && a.ActionType == ActionType.StatusChange
+                && a.NewValue == "Finished"
+                && a.Timestamp >= since)
+            .ToListAsync();
+
+    public async Task<List<BookAction>> GetPageUpdatesSinceAsync(int userId, DateTime since) =>
+        await _db.BookActions
+            .Where(a => a.UserId == userId
+                && a.ActionType == ActionType.PageUpdate
+                && a.Timestamp >= since)
             .ToListAsync();
 }

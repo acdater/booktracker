@@ -6,6 +6,7 @@ import { EmptyState } from '../components/EmptyState/EmptyState';
 import { BookForm } from '../components/BookForm/BookForm';
 import { ProgressPopup } from '../components/ProgressPopup/ProgressPopup';
 import { CelebrationOverlay } from '../components/CelebrationOverlay/CelebrationOverlay';
+import { JournalPopup } from '../components/JournalPopup/JournalPopup';
 import type { UserBook } from '../types';
 
 export function ShelfPage() {
@@ -14,6 +15,7 @@ export function ShelfPage() {
   const [selectedBook, setSelectedBook] = useState<UserBook | null>(null);
   const [celebrationTitle, setCelebrationTitle] = useState('');
   const [showCelebration, setShowCelebration] = useState(false);
+  const [journalBook, setJournalBook] = useState<UserBook | null>(null);
 
   return (
     <div className="bg-warm-bg min-h-screen">
@@ -50,6 +52,7 @@ export function ShelfPage() {
               userBook={ub}
               onRefetch={refetch}
               onClick={ub.status === 'Started' ? () => setSelectedBook(ub) : undefined}
+              onJournal={() => setJournalBook(ub)}
             />
           ))}
         </div>
@@ -78,6 +81,11 @@ export function ShelfPage() {
         visible={showCelebration}
         bookTitle={celebrationTitle}
         onDismiss={() => setShowCelebration(false)}
+      />
+
+      <JournalPopup
+        userBook={journalBook}
+        onClose={() => setJournalBook(null)}
       />
     </div>
   );
