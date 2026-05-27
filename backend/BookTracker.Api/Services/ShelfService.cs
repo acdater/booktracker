@@ -8,10 +8,14 @@ using BookTracker.Api.Services.Interfaces;
 
 namespace BookTracker.Api.Services;
 
-public class ShelfService(IUserBookRepository userBookRepository, IBookRepository bookRepository) : IShelfService
+public class ShelfService(
+    IUserBookRepository userBookRepository,
+    IBookRepository bookRepository,
+    IBookActionRepository bookActionRepository) : IShelfService
 {
     private readonly IUserBookRepository _userBookRepository = userBookRepository;
     private readonly IBookRepository _bookRepository = bookRepository;
+    private readonly IBookActionRepository _bookActionRepository = bookActionRepository;
 
     public async Task<UserBookResponse> AddToShelfAsync(int userId, int bookId)
     {
@@ -95,6 +99,114 @@ public class ShelfService(IUserBookRepository userBookRepository, IBookRepositor
 
         var counts = await _userBookRepository.GetReaderCountsAsync([ub.BookId]);
         return MapToResponse(ub, counts.GetValueOrDefault(ub.BookId, 0));
+    }
+
+    public async Task<UserBookResponse> UpdatePagesAsync(int userId, int userBookId, int pages)
+    {
+        var ub = await _userBookRepository.GetByIdAsync(userBookId)
+            ?? throw new ApiException(404, "UserBook not found.", "NOT_FOUND");
+
+        if (ub.UserId != userId)
+            throw new ApiException(403, "Access denied.", "FORBIDDEN");
+
+        if (ub.Status != ReadingStatus.Started)
+            throw new ApiException(400, "Page progress only allowed on Started books.", "INVALID_STATE");
+
+        if (pages < 0 || pages > ub.Book.TotalPages)
+            throw new ApiException(400, "Page value exceeds total pages.", "INVALID_PAGE");
+
+        var oldPages = ub.CurrentPages;
+        ub.CurrentPages = pages;
+        ub.LastActivityAt = DateTime.UtcNow;
+
+        var pageAction = new BookAction
+        {
+            UserId = userId,
+            UserBookId = userBookId,
+            ActionType = ActionType.PageUpdate,
+            OldValue = oldPages.ToString(),
+            NewValue = pages.ToString(),
+            Timestamp = DateTime.UtcNow
+        };
+
+        bool isAutoFinish = pages == ub.Book.TotalPages;
+
+        if (isAutoFinish)
+        {
+            ub.Status = ReadingStatus.Finished;
+            ub.FinishedAt = DateTime.UtcNow;
+
+            var statusAction = new BookAction
+            {
+                UserId = userId,
+                UserBookId = userBookId,
+                ActionType = ActionType.StatusChange,
+                OldValue = ReadingStatus.Started.ToString(),
+                NewValue = ReadingStatus.Finished.ToString(),
+                Timestamp = DateTime.UtcNow
+            };
+
+            ub = await _userBookRepository.UpdateWithActionsAsync(ub, [pageAction, statusAction]);
+        }
+        else
+        {
+            ub = await _userBookRepository.UpdateWithActionAsync(ub, pageAction);
+        }
+
+        var counts = await _userBookRepository.GetReaderCountsAsync([ub.BookId]);
+        return MapToResponse(ub, counts.GetValueOrDefault(ub.BookId, 0));
+    }
+
+    public async Task<List<JournalEntryResponse>> GetJournalAsync(int userId, int userBookId)
+    {
+        var ub = await _userBookRepository.GetByIdAsync(userBookId)
+            ?? throw new ApiException(404, "UserBook not found.", "NOT_FOUND");
+
+        if (ub.UserId != userId)
+            throw new ApiException(403, "Access denied.", "FORBIDDEN");
+
+        var actions = await _bookActionRepository.GetJournalAsync(userId, ub.BookId);
+
+        return actions.Select(a => new JournalEntryResponse
+        {
+            ReadingNumber = a.UserBook.ReadingNumber,
+            ActionType = a.ActionType == ActionType.StatusChange ? "Status Change" : "Page Update",
+            OldValue = a.OldValue,
+            NewValue = a.NewValue,
+            Timestamp = a.Timestamp
+        }).ToList();
+    }
+
+    public async Task<UserBookResponse> RereadAsync(int userId, int userBookId)
+    {
+        var ub = await _userBookRepository.GetByIdAsync(userBookId)
+            ?? throw new ApiException(404, "UserBook not found.", "NOT_FOUND");
+
+        if (ub.UserId != userId)
+            throw new ApiException(403, "Access denied.", "FORBIDDEN");
+
+        if (ub.Status != ReadingStatus.Finished && ub.Status != ReadingStatus.Abandoned)
+            throw new ApiException(400, "Read Again is only available for Finished or Abandoned books.", "INVALID_STATE");
+
+        var maxReadingNumber = await _userBookRepository.GetMaxReadingNumberAsync(userId, ub.BookId);
+
+        var newUb = new UserBook
+        {
+            UserId = userId,
+            BookId = ub.BookId,
+            Status = ReadingStatus.Resting,
+            CurrentPages = 0,
+            ReadingNumber = maxReadingNumber + 1,
+            StartedAt = null,
+            FinishedAt = null,
+            LastActivityAt = DateTime.UtcNow
+        };
+
+        newUb = await _userBookRepository.CreateAsync(newUb);
+        newUb.Book = ub.Book;
+
+        var counts = await _userBookRepository.GetReaderCountsAsync([newUb.BookId]);
+        return MapToResponse(newUb, counts.GetValueOrDefault(newUb.BookId, 0));
     }
 
     private static UserBookResponse MapToResponse(UserBook ub, int readerCount) => new()

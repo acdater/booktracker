@@ -20,4 +20,11 @@ public class BookActionRepository(AppDbContext db) : IBookActionRepository
             .Where(a => a.UserId == userId && a.UserBookId == userBookId)
             .OrderBy(a => a.Timestamp)
             .ToListAsync();
+
+    public async Task<List<BookAction>> GetJournalAsync(int userId, int bookId) =>
+        await _db.BookActions
+            .Include(a => a.UserBook)
+            .Where(a => a.UserId == userId && a.UserBook.BookId == bookId)
+            .OrderByDescending(a => a.Timestamp)
+            .ToListAsync();
 }

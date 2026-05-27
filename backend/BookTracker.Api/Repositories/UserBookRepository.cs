@@ -43,6 +43,14 @@ public class UserBookRepository(AppDbContext db) : IUserBookRepository
         return ub;
     }
 
+    public async Task<UserBook> UpdateWithActionsAsync(UserBook ub, IReadOnlyList<BookAction> actions)
+    {
+        _db.UserBooks.Update(ub);
+        _db.BookActions.AddRange(actions);
+        await _db.SaveChangesAsync();
+        return ub;
+    }
+
     public async Task<int> GetMaxReadingNumberAsync(int userId, int bookId) =>
         await _db.UserBooks
             .Where(ub => ub.UserId == userId && ub.BookId == bookId)

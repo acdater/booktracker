@@ -6,4 +6,5 @@ public interface IBookActionRepository
 {
     Task AddAsync(BookAction action);
     Task<List<BookAction>> GetByUserAndBookAsync(int userId, int userBookId);
+    Task<List<BookAction>> GetJournalAsync(int userId, int bookId);
 }

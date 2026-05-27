@@ -11,8 +11,12 @@ public class ShelfServiceTests
 {
     private readonly Mock<IUserBookRepository> _userBookRepoMock = new();
     private readonly Mock<IBookRepository> _bookRepoMock = new();
+    private readonly Mock<IBookActionRepository> _bookActionRepoMock = new();
 
-    private ShelfService CreateSut() => new(_userBookRepoMock.Object, _bookRepoMock.Object);
+    private ShelfService CreateSut() => new(
+        _userBookRepoMock.Object,
+        _bookRepoMock.Object,
+        _bookActionRepoMock.Object);
 
     private static Book MakeBook(int id = 1) => new()
     {
@@ -235,5 +239,217 @@ public class ShelfServiceTests
 
         Assert.Equal(403, ex.StatusCode);
         Assert.Equal("FORBIDDEN", ex.ErrorCode);
+    }
+
+    // ── UpdatePagesAsync ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task UpdatePagesAsync_NormalUpdate_StoresPageUpdateAction()
+    {
+        var book = MakeBook(10); // TotalPages = 300
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Started;
+        ub.CurrentPages = 50;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        UserBook? capturedUb = null;
+        BookAction? capturedAction = null;
+        _userBookRepoMock
+            .Setup(r => r.UpdateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()))
+            .Callback<UserBook, BookAction>((u, a) => { capturedUb = u; capturedAction = a; })
+            .ReturnsAsync((UserBook u, BookAction _) => u);
+        _userBookRepoMock.Setup(r => r.GetReaderCountsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, int> { [10] = 1 });
+
+        var sut = CreateSut();
+        var result = await sut.UpdatePagesAsync(7, 1, 100);
+
+        Assert.Equal(100, capturedUb!.CurrentPages);
+        Assert.Equal(ReadingStatus.Started, capturedUb.Status);
+        Assert.Null(capturedUb.FinishedAt);
+        Assert.Equal(ActionType.PageUpdate, capturedAction!.ActionType);
+        Assert.Equal("50", capturedAction.OldValue);
+        Assert.Equal("100", capturedAction.NewValue);
+        Assert.Equal("Started", result.Status);
+        _userBookRepoMock.Verify(r => r.UpdateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()), Times.Once);
+        _userBookRepoMock.Verify(r => r.UpdateWithActionsAsync(It.IsAny<UserBook>(), It.IsAny<IReadOnlyList<BookAction>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdatePagesAsync_AutoFinish_StoresTwoBookActionsAndFinishedStatus()
+    {
+        var book = MakeBook(10); // TotalPages = 300
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Started;
+        ub.CurrentPages = 280;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        IReadOnlyList<BookAction>? capturedActions = null;
+        UserBook? capturedUb = null;
+        _userBookRepoMock
+            .Setup(r => r.UpdateWithActionsAsync(It.IsAny<UserBook>(), It.IsAny<IReadOnlyList<BookAction>>()))
+            .Callback<UserBook, IReadOnlyList<BookAction>>((u, a) => { capturedUb = u; capturedActions = a; })
+            .ReturnsAsync((UserBook u, IReadOnlyList<BookAction> _) => u);
+        _userBookRepoMock.Setup(r => r.GetReaderCountsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, int> { [10] = 1 });
+
+        var sut = CreateSut();
+        var result = await sut.UpdatePagesAsync(7, 1, 300); // 300 == TotalPages
+
+        Assert.Equal(ReadingStatus.Finished, capturedUb!.Status);
+        Assert.NotNull(capturedUb.FinishedAt);
+        Assert.Equal(300, capturedUb.CurrentPages);
+
+        Assert.NotNull(capturedActions);
+        Assert.Equal(2, capturedActions.Count);
+        Assert.Contains(capturedActions, a => a.ActionType == ActionType.PageUpdate && a.NewValue == "300");
+        Assert.Contains(capturedActions, a => a.ActionType == ActionType.StatusChange && a.OldValue == "Started" && a.NewValue == "Finished");
+
+        Assert.Equal("Finished", result.Status);
+        _userBookRepoMock.Verify(r => r.UpdateWithActionsAsync(It.IsAny<UserBook>(), It.IsAny<IReadOnlyList<BookAction>>()), Times.Once);
+        _userBookRepoMock.Verify(r => r.UpdateWithActionAsync(It.IsAny<UserBook>(), It.IsAny<BookAction>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdatePagesAsync_PagesExceedTotal_Throws400InvalidPage()
+    {
+        var book = MakeBook(10); // TotalPages = 300
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Started;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.UpdatePagesAsync(7, 1, 999));
+
+        Assert.Equal(400, ex.StatusCode);
+        Assert.Equal("INVALID_PAGE", ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task UpdatePagesAsync_StatusNotStarted_Throws400InvalidState()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Resting; // not Started
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.UpdatePagesAsync(7, 1, 100));
+
+        Assert.Equal(400, ex.StatusCode);
+        Assert.Equal("INVALID_STATE", ex.ErrorCode);
+    }
+
+    // ── GetJournalAsync ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetJournalAsync_ValidRequest_ReturnsJournalEntriesAcrossReadingNumbers()
+    {
+        var book = MakeBook(10);
+        var ub1 = MakeUserBook(1, 7, book, readingNumber: 1);
+        var ub2 = MakeUserBook(2, 7, book, readingNumber: 2);
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub1);
+
+        var actions = new List<BookAction>
+        {
+            new() { Id = 1, UserId = 7, UserBookId = 2, UserBook = ub2,
+                    ActionType = ActionType.StatusChange, OldValue = "Resting", NewValue = "Started",
+                    Timestamp = DateTime.UtcNow },
+            new() { Id = 2, UserId = 7, UserBookId = 1, UserBook = ub1,
+                    ActionType = ActionType.PageUpdate, OldValue = "0", NewValue = "100",
+                    Timestamp = DateTime.UtcNow.AddDays(-1) }
+        };
+
+        _bookActionRepoMock.Setup(r => r.GetJournalAsync(7, book.Id)).ReturnsAsync(actions);
+
+        var sut = CreateSut();
+        var result = await sut.GetJournalAsync(7, 1);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(2, result[0].ReadingNumber);
+        Assert.Equal("Status Change", result[0].ActionType);
+        Assert.Equal(1, result[1].ReadingNumber);
+        Assert.Equal("Page Update", result[1].ActionType);
+    }
+
+    [Fact]
+    public async Task GetJournalAsync_WrongOwner_Throws403()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 99, book); // owned by userId=99
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.GetJournalAsync(7, 1));
+
+        Assert.Equal(403, ex.StatusCode);
+    }
+
+    // ── RereadAsync ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task RereadAsync_FinishedBook_CreatesNewUserBookWithCorrectValues()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Finished;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+        _userBookRepoMock.Setup(r => r.GetMaxReadingNumberAsync(7, book.Id)).ReturnsAsync(1);
+
+        UserBook? captured = null;
+        _userBookRepoMock.Setup(r => r.CreateAsync(It.IsAny<UserBook>()))
+            .Callback<UserBook>(u => captured = u)
+            .ReturnsAsync((UserBook u) => u);
+        _userBookRepoMock.Setup(r => r.GetReaderCountsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, int> { [book.Id] = 1 });
+
+        var sut = CreateSut();
+        var result = await sut.RereadAsync(7, 1);
+
+        Assert.NotNull(captured);
+        Assert.Equal(ReadingStatus.Resting, captured.Status);
+        Assert.Equal(0, captured.CurrentPages);
+        Assert.Equal(2, captured.ReadingNumber); // MAX(1) + 1
+        Assert.Null(captured.StartedAt);
+        Assert.Null(captured.FinishedAt);
+        Assert.Equal("Resting", result.Status);
+    }
+
+    [Fact]
+    public async Task RereadAsync_StartedBook_Throws400InvalidState()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 7, book);
+        ub.Status = ReadingStatus.Started;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.RereadAsync(7, 1));
+
+        Assert.Equal(400, ex.StatusCode);
+        Assert.Equal("INVALID_STATE", ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task RereadAsync_WrongOwner_Throws403()
+    {
+        var book = MakeBook(10);
+        var ub = MakeUserBook(1, 99, book); // owned by userId=99
+        ub.Status = ReadingStatus.Finished;
+
+        _userBookRepoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(ub);
+
+        var sut = CreateSut();
+        var ex = await Assert.ThrowsAsync<ApiException>(() => sut.RereadAsync(7, 1));
+
+        Assert.Equal(403, ex.StatusCode);
     }
 }
