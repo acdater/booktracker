@@ -34,6 +34,7 @@ public class AuthService(IUserRepository userRepository, IConfiguration configur
             UserId = user.Id,
             Email = user.Email,
             FirstName = user.FirstName,
+            LastName = user.LastName,
             Token = GenerateJwt(user)
         };
     }
@@ -49,6 +50,7 @@ public class AuthService(IUserRepository userRepository, IConfiguration configur
             UserId = user.Id,
             Email = user.Email,
             FirstName = user.FirstName,
+            LastName = user.LastName,
             Token = GenerateJwt(user)
         };
     }

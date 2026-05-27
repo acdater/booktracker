@@ -1,6 +1,15 @@
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
+import { useAuth } from '../../hooks/useAuth';
 
 export function NavBar() {
+  const { firstName, lastName, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'text-accent font-medium' : 'text-text-secondary hover:text-text-primary transition-colors';
 
@@ -14,7 +23,33 @@ export function NavBar() {
         <NavLink to="/stats" className={linkClass}>
           Stats
         </NavLink>
+        <div className="ml-auto flex items-center gap-4">
+          <span className="text-[14px] text-text-secondary">
+            {firstName} {lastName}
+          </span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="text-[13px] text-text-secondary hover:text-error transition-colors"
+          >
+            Log out
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile user strip */}
+      <div className="sm:hidden flex items-center justify-between bg-warm-surface border-b border-warm-border px-4 h-10">
+        <span className="text-[13px] font-medium text-text-primary">
+          {firstName} {lastName}
+        </span>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="text-[12px] text-text-secondary hover:text-error transition-colors"
+        >
+          Log out
+        </button>
+      </div>
 
       {/* Mobile bottom tabs */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-warm-surface border-t border-warm-border flex z-50">

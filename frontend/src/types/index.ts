@@ -2,12 +2,14 @@ export interface User {
   userId: number;
   email: string;
   firstName: string;
+  lastName: string;
 }
 
 export interface AuthResponse {
   userId: number;
   email: string;
   firstName: string;
+  lastName: string;
   token: string;
 }
 
@@ -46,7 +48,7 @@ export interface BookAction {
 }
 
 export interface StatsStripData {
-  totalUserBooks: number;
+  totalBooks: number;
   finishedCount: number;
   startedCount: number;
   pagesThisMonth: number;
@@ -54,13 +56,27 @@ export interface StatsStripData {
 
 export interface StatsPageData {
   byStatus: {
+    total: number;
     resting: number;
     started: number;
     finished: number;
     abandoned: number;
-    total: number;
   };
-  completionsBy: { days: number; count: number }[];
-  pagesBy: { days: number; pages: number }[];
+  booksCompleted: {
+    days7: number;
+    days30: number;
+    days90: number;
+    days180: number;
+    days270: number;
+    days365: number;
+  };
+  pagesRead: {
+    days7: number;
+    days30: number;
+    days90: number;
+    days180: number;
+    days270: number;
+    days365: number;
+  };
   unfinishedGenre: string | null;
 }

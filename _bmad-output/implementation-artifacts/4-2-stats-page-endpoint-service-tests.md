@@ -3,7 +3,7 @@
 **Epic:** 4 — Reading Analytics  
 **Story ID:** 4.2  
 **Story Key:** 4-2-stats-page-endpoint-service-tests  
-**Status:** ready-for-dev
+**Status:** review  
 
 ---
 
@@ -35,16 +35,16 @@ So that I can understand my reading patterns in depth.
 
 ## Tasks
 
-- [ ] **Task 1: Add new DTOs**
+- [x] **Task 1: Add new DTOs**
   - Create `backend/BookTracker.Api/DTOs/Stats/PeriodCounts.cs` — `{ Days7, Days30, Days90, Days180, Days270, Days365 }` (all `int`).
   - Create `backend/BookTracker.Api/DTOs/Stats/ByStatusCounts.cs` — `{ Total, Resting, Started, Finished, Abandoned }` (all `int`).
   - Create `backend/BookTracker.Api/DTOs/Stats/StatsPageResponse.cs` — `{ ByStatus: ByStatusCounts, BooksCompleted: PeriodCounts, PagesRead: PeriodCounts, UnfinishedGenre: string? }`.
 
-- [ ] **Task 2: Add new repository methods**
+- [x] **Task 2: Add new repository methods**
   - Add `Task<List<BookAction>> GetStatusChangesCompletedSinceAsync(int userId, DateTime since)` to `IBookActionRepository` and implement in `BookActionRepository` (filter: `ActionType == StatusChange && NewValue == "Finished" && Timestamp >= since`).
   - Add `Task<List<BookAction>> GetPageUpdatesSinceAsync(int userId, DateTime since)` to `IBookActionRepository` and implement in `BookActionRepository` (filter: `ActionType == PageUpdate && Timestamp >= since`).
 
-- [ ] **Task 3: Extend `IStatsService` and implement `GetPageAsync`**
+- [x] **Task 3: Extend `IStatsService` and implement `GetPageAsync`**
   - Add `Task<StatsPageResponse> GetPageAsync(int userId)` to `IStatsService`.
   - Implement in `StatsService`:
     - `ByStatus`: call `CountAllAsync` + four `CountByStatusAsync` calls (Resting, Started, Finished, Abandoned).
@@ -52,10 +52,10 @@ So that I can understand my reading patterns in depth.
     - `PagesRead`: call `GetPageUpdatesSinceAsync(userId, now.AddDays(-365))`; filter by window and sum `Math.Max(0, nv - ov)` in-memory.
     - `UnfinishedGenre`: call `_userBookRepository.GetShelfAsync(userId)` (returns all UserBooks with Book nav); apply FR-22 logic (see Dev Notes).
 
-- [ ] **Task 4: Add `GET /api/stats` endpoint to `StatsController`**
+- [x] **Task 4: Add `GET /api/stats` endpoint to `StatsController`**
   - Add `[HttpGet]` action `GetStats()` to `StatsController` — extracts userId from claims, calls `statsService.GetPageAsync(userId)`, returns `Ok(result)`.
 
-- [ ] **Task 5: Write `StatsServiceTests.cs`**
+- [x] **Task 5: Write `StatsServiceTests.cs`**
   - Create `backend/BookTracker.Tests/Services/StatsServiceTests.cs`.
   - Use Moq pattern (same as `ShelfServiceTests.cs`): mock `IUserBookRepository` + `IBookActionRepository`.
   - Test cases (see Dev Notes for full code):
@@ -68,7 +68,7 @@ So that I can understand my reading patterns in depth.
     - `GetPageAsync_UnfinishedGenre_ReturnsNullWhenStartedAcrossOnlyOneGenre` — 3 started in same genre → null.
     - `GetStripAsync_NoCaching_RepositoryCalledEachTime` — two calls → repo called twice.
 
-- [ ] **Task 6: Run `dotnet test` — all tests pass (≥ 8 new tests + 46 existing = ≥ 54 total, 0 failures)**
+- [x] **Task 6: Run `dotnet test` — all tests pass (≥ 8 new tests + 46 existing = ≥ 54 total, 0 failures)**
 
 ---
 
@@ -508,14 +508,25 @@ ASP.NET default JSON serialization: PascalCase → camelCase via `JsonSerializer
 
 ## Dev Agent Record
 
-### Implementation Plan
-_(to be filled by dev agent)_
-
-### Debug Log
-_(to be filled by dev agent)_
+### File List
+- `backend/BookTracker.Api/DTOs/Stats/PeriodCounts.cs` — NEW
+- `backend/BookTracker.Api/DTOs/Stats/ByStatusCounts.cs` — NEW
+- `backend/BookTracker.Api/DTOs/Stats/StatsPageResponse.cs` — NEW
+- `backend/BookTracker.Api/Repositories/Interfaces/IBookActionRepository.cs` — added `GetStatusChangesCompletedSinceAsync`, `GetPageUpdatesSinceAsync`
+- `backend/BookTracker.Api/Repositories/BookActionRepository.cs` — implemented both new methods
+- `backend/BookTracker.Api/Services/Interfaces/IStatsService.cs` — added `GetPageAsync`
+- `backend/BookTracker.Api/Services/StatsService.cs` — implemented `GetPageAsync`, `SumPositiveDeltas`, `ComputeUnfinishedGenre`; added `using BookTracker.Api.Models`
+- `backend/BookTracker.Api/Controllers/StatsController.cs` — added `GetStats()` action
+- `backend/BookTracker.Tests/Services/StatsServiceTests.cs` — NEW (8 test cases)
 
 ### Completion Notes
-_(to be filled by dev agent)_
+All 6 tasks complete. `dotnet test`: 54/54 passed (8 new + 46 existing), 0 regressions.
+
+Key decisions:
+- `GetPageAsync` uses two broad DB calls (`since365`) then 6 in-memory window filters each — avoids 12 round-trips.
+- `ComputeUnfinishedGenre` reuses existing `IUserBookRepository.GetShelfAsync` (already includes Book nav) — no new repo method needed.
+- Div-by-zero guarded: genre with 0 Finished+Abandoned gets `double.MaxValue` ratio (always wins if threshold met).
+- `StatsServiceTests` uses Moq only (no EF in-memory DB) — matches existing `ShelfServiceTests` pattern.
 
 ### Change Log
-_(to be filled by dev agent)_
+- 2026-05-27: Implemented Story 4.2 — Stats Page Endpoint & Service Tests

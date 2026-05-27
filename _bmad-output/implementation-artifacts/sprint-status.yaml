@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: "2026-05-26T11:27:44+03:00"
-last_updated: "2026-05-27T11:22:00+03:00"
+last_updated: "2026-05-27T14:30:00+03:00"
 project: BookTracker
 project_key: NOKEY
 tracking_system: file-system
@@ -75,7 +75,7 @@ development_status:
   # ── Epic 4: Reading Analytics ──────────────────────────────────────────────
   epic-4: in-progress
   4-1-stats-strip-endpoint: review
-  4-2-stats-page-endpoint-service-tests: in-progress
-  4-3-frontend-statsstrip-live-data: backlog
-  4-4-frontend-stats-page: backlog
+  4-2-stats-page-endpoint-service-tests: review
+  4-3-frontend-statsstrip-live-data: review
+  4-4-frontend-stats-page: review
   epic-4-retrospective: optional
