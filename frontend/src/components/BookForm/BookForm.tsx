@@ -49,8 +49,8 @@ function getErrors(form: FormData) {
     title: !form.title.trim() ? 'Title is required' : '',
     author: !form.author.trim() ? 'Author is required' : '',
     totalPages:
-      !form.totalPages || !Number.isInteger(+form.totalPages) || +form.totalPages < 1
-        ? 'Must be a positive number'
+      !form.totalPages || !Number.isInteger(+form.totalPages) || +form.totalPages < 1 || +form.totalPages > 10000
+        ? 'Must be a number between 1 and 10,000'
         : '',
     genre: !form.genre ? 'Please select a genre' : '',
   };
@@ -286,6 +286,7 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
                   id="book-pages"
                   type="number"
                   min={1}
+                  max={10000}
                   value={formData.totalPages}
                   onChange={e => handleFieldChange('totalPages', e.target.value)}
                   onBlur={() => handleBlur('totalPages')}

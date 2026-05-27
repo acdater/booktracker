@@ -22,19 +22,19 @@ public class StatsService(
         var now = DateTime.UtcNow;
         var pageActions = await _bookActionRepository.GetPageUpdatesInMonthAsync(userId, now.Year, now.Month);
 
-        var pagesThisMonth = pageActions.Sum(a =>
+        var pagesThisMonth = 0L;
+        foreach (var a in pageActions)
         {
             if (int.TryParse(a.NewValue, out var nv) && int.TryParse(a.OldValue, out var ov))
-                return Math.Max(0, nv - ov);
-            return 0;
-        });
+                pagesThisMonth += Math.Max(0, nv - ov);
+        }
 
         return new StatsStripResponse
         {
             TotalBooks = totalBooks,
             FinishedCount = finishedCount,
             StartedCount = startedCount,
-            PagesThisMonth = pagesThisMonth
+            PagesThisMonth = (int)Math.Min(pagesThisMonth, int.MaxValue)
         };
     }
 
@@ -94,15 +94,16 @@ public class StatsService(
         };
     }
 
-    private static int SumPositiveDeltas(List<BookAction> actions, DateTime since) =>
-        actions
-            .Where(a => a.Timestamp >= since)
-            .Sum(a =>
-            {
-                if (int.TryParse(a.NewValue, out var nv) && int.TryParse(a.OldValue, out var ov))
-                    return Math.Max(0, nv - ov);
-                return 0;
-            });
+    private static int SumPositiveDeltas(List<BookAction> actions, DateTime since)
+    {
+        var total = 0L;
+        foreach (var a in actions.Where(a => a.Timestamp >= since))
+        {
+            if (int.TryParse(a.NewValue, out var nv) && int.TryParse(a.OldValue, out var ov))
+                total += Math.Max(0, nv - ov);
+        }
+        return (int)Math.Min(total, int.MaxValue);
+    }
 
     private static string? ComputeUnfinishedGenre(List<UserBook> userBooks)
     {

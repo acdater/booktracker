@@ -14,7 +14,7 @@ public class CreateBookDto
     public string Author { get; set; } = string.Empty;
 
     [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "TotalPages must be a positive integer.")]
+    [Range(1, 10000, ErrorMessage = "Total pages must be between 1 and 10,000.")]
     public int TotalPages { get; set; }
 
     [Required]
