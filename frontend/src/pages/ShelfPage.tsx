@@ -39,7 +39,7 @@ export function ShelfPage() {
       {!loading && !error && shelf.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 px-4 sm:px-6 lg:px-8 pb-6 max-w-[1200px] mx-auto">
           {shelf.map((ub) => (
-            <BookCard key={ub.id} userBook={ub} />
+            <BookCard key={ub.id} userBook={ub} onRefetch={refetch} />
           ))}
         </div>
       )}
