@@ -14,3 +14,9 @@ export const updateStatus = (userBookId: number, status: string) =>
 
 export const reread = (userBookId: number) =>
   fetchJson<UserBook>(`/api/shelf/${userBookId}/reread`, { method: 'POST' });
+
+export const updatePages = (userBookId: number, pages: number) =>
+  fetchJson<UserBook>(`/api/shelf/${userBookId}/pages`, {
+    method: 'PATCH',
+    body: JSON.stringify({ pages }),
+  });

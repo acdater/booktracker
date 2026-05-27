@@ -4,10 +4,16 @@ import { BookCard } from '../components/BookCard/BookCard';
 import { StatsStrip } from '../components/StatsStrip/StatsStrip';
 import { EmptyState } from '../components/EmptyState/EmptyState';
 import { BookForm } from '../components/BookForm/BookForm';
+import { ProgressPopup } from '../components/ProgressPopup/ProgressPopup';
+import { CelebrationOverlay } from '../components/CelebrationOverlay/CelebrationOverlay';
+import type { UserBook } from '../types';
 
 export function ShelfPage() {
   const { shelf, loading, error, refetch } = useShelf();
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<UserBook | null>(null);
+  const [celebrationTitle, setCelebrationTitle] = useState('');
+  const [showCelebration, setShowCelebration] = useState(false);
 
   return (
     <div className="bg-warm-bg min-h-screen">
@@ -37,9 +43,14 @@ export function ShelfPage() {
       )}
 
       {!loading && !error && shelf.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 px-4 sm:px-6 lg:px-8 pb-6 max-w-[1200px] mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 px-4 sm:px-6 lg:px-8 pb-6 max-w-[1200px] mx-auto">
           {shelf.map((ub) => (
-            <BookCard key={ub.id} userBook={ub} onRefetch={refetch} />
+            <BookCard
+              key={ub.id}
+              userBook={ub}
+              onRefetch={refetch}
+              onClick={ub.status === 'Started' ? () => setSelectedBook(ub) : undefined}
+            />
           ))}
         </div>
       )}
@@ -51,6 +62,22 @@ export function ShelfPage() {
           setIsAddBookOpen(false);
           refetch();
         }}
+      />
+
+      <ProgressPopup
+        userBook={selectedBook}
+        onClose={() => setSelectedBook(null)}
+        onFinished={(title) => {
+          setCelebrationTitle(title);
+          setShowCelebration(true);
+        }}
+        onRefetch={refetch}
+      />
+
+      <CelebrationOverlay
+        visible={showCelebration}
+        bookTitle={celebrationTitle}
+        onDismiss={() => setShowCelebration(false)}
       />
     </div>
   );

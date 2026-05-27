@@ -62,8 +62,8 @@ export function BookCard({ userBook, onClick, onRefetch }: BookCardProps) {
         onClick={onClick}
         className={onClick ? 'cursor-pointer active:scale-[0.98] transition-transform duration-150' : ''}
       >
-        {/* Cover image — 2:3 aspect ratio */}
-        <div className="aspect-[2/3] w-full overflow-hidden bg-warm-surface-alt flex items-center justify-center">
+        {/* Cover image — fixed height to keep cards compact */}
+        <div className="h-24 w-full overflow-hidden bg-warm-surface-alt flex items-center justify-center">
           {book.coverImageUrl ? (
             <img src={book.coverImageUrl} alt={book.title} className="w-full h-full object-cover" />
           ) : (
@@ -72,11 +72,11 @@ export function BookCard({ userBook, onClick, onRefetch }: BookCardProps) {
         </div>
 
         {/* Card body */}
-        <div className="p-3 flex flex-col gap-1">
-          <p className="text-[17px] font-semibold text-text-primary leading-[1.35] line-clamp-2">{book.title}</p>
-          <p className="text-[15px] text-text-secondary leading-[1.5] line-clamp-1">{book.author}</p>
+        <div className="p-2 flex flex-col gap-0.5">
+          <p className="text-[14px] font-semibold text-text-primary leading-[1.35] line-clamp-2">{book.title}</p>
+          <p className="text-[12px] text-text-secondary leading-[1.4] line-clamp-1">{book.author}</p>
           <StatusRibbon status={status} />
-          <p className="text-[13px] text-text-secondary mt-1">
+          <p className="text-[11px] text-text-secondary mt-0.5">
             👥 {readerCount} {readerCount === 1 ? 'reader' : 'readers'}
           </p>
         </div>
@@ -98,7 +98,7 @@ export function BookCard({ userBook, onClick, onRefetch }: BookCardProps) {
       </div>
 
       {/* Action area */}
-      <div className="px-3 pb-3 pt-2">
+      <div className="px-2 pb-2 pt-1">
         <button
           type="button"
           onClick={handleAction}
