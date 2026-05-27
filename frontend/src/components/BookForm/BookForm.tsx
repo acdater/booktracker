@@ -21,6 +21,7 @@ const GENRES = [
 type Step = 'isbn' | 'form';
 
 interface FormData {
+  isbn: string;
   title: string;
   author: string;
   totalPages: string;
@@ -29,6 +30,7 @@ interface FormData {
 }
 
 interface TouchedFields {
+  isbn: boolean;
   title: boolean;
   author: boolean;
   totalPages: boolean;
@@ -41,11 +43,12 @@ interface BookFormProps {
   onSuccess: () => void;
 }
 
-const EMPTY_FORM: FormData = { title: '', author: '', totalPages: '', genre: '', coverImageUrl: '' };
-const UNTOUCHED: TouchedFields = { title: false, author: false, totalPages: false, genre: false };
+const EMPTY_FORM: FormData = { isbn: '', title: '', author: '', totalPages: '', genre: '', coverImageUrl: '' };
+const UNTOUCHED: TouchedFields = { isbn: false, title: false, author: false, totalPages: false, genre: false };
 
 function getErrors(form: FormData) {
   return {
+    isbn: !form.isbn.trim() ? 'ISBN is required' : '',
     title: !form.title.trim() ? 'Title is required' : '',
     author: !form.author.trim() ? 'Author is required' : '',
     totalPages:
@@ -67,9 +70,6 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  // Store the pre-filled ISBN so we can send it to createBook
-  const [resolvedIsbn, setResolvedIsbn] = useState('');
-
   const resetState = useCallback(() => {
     setStep('isbn');
     setIsbnInput('');
@@ -79,7 +79,6 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
     setTouched(UNTOUCHED);
     setIsSubmitting(false);
     setApiError('');
-    setResolvedIsbn('');
   }, []);
 
   const handleOpenChange = (open: boolean) => {
@@ -97,23 +96,22 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
     setIsLookingUp(true);
     try {
       const book = await lookupISBN(trimmed);
-      setResolvedIsbn(trimmed);
       if (book) {
         setFormData({
+          isbn: trimmed,
           title: book.title,
           author: book.author,
           totalPages: book.totalPages > 0 ? String(book.totalPages) : '',
-          genre: '',
+          genre: book.genre || '',
           coverImageUrl: book.coverImageUrl ?? '',
         });
       } else {
-        setFormData(EMPTY_FORM);
+        setFormData({ ...EMPTY_FORM, isbn: trimmed });
       }
       setStep('form');
     } catch {
       // Network or API error — still allow manual entry
-      setResolvedIsbn(trimmed);
-      setFormData(EMPTY_FORM);
+      setFormData({ ...EMPTY_FORM, isbn: trimmed });
       setStep('form');
     } finally {
       setIsLookingUp(false);
@@ -131,7 +129,7 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
 
   const handleSubmit = async () => {
     // Touch all fields to surface any remaining errors
-    setTouched({ title: true, author: true, totalPages: true, genre: true });
+    setTouched({ isbn: true, title: true, author: true, totalPages: true, genre: true });
     const errors = getErrors(formData);
     if (Object.values(errors).some(e => e)) return;
 
@@ -139,7 +137,7 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
     setApiError('');
     try {
       const book = await createBook({
-        isbn: resolvedIsbn,
+        isbn: formData.isbn.trim(),
         title: formData.title.trim(),
         author: formData.author.trim(),
         totalPages: parseInt(formData.totalPages, 10),
@@ -221,7 +219,7 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
 
               <button
                 type="button"
-                onClick={() => { setResolvedIsbn(isbnInput.trim()); setStep('form'); }}
+                onClick={() => { setFormData({ ...EMPTY_FORM, isbn: isbnInput.trim() }); setStep('form'); }}
                 className="text-[14px] text-text-secondary hover:text-text-primary transition-colors text-center min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
               >
                 Skip — enter details manually
@@ -238,6 +236,25 @@ export function BookForm({ isOpen, onOpenChange, onSuccess }: BookFormProps) {
                   {apiError}
                 </div>
               )}
+
+              {/* ISBN */}
+              <div>
+                <label htmlFor="book-isbn-form" className="block text-[13px] font-medium text-text-secondary mb-1">
+                  ISBN <span className="text-error">*</span>
+                </label>
+                <input
+                  id="book-isbn-form"
+                  type="text"
+                  value={formData.isbn}
+                  onChange={e => handleFieldChange('isbn', e.target.value)}
+                  onBlur={() => handleBlur('isbn')}
+                  placeholder="e.g. 9780141199078"
+                  className={inputClass('isbn')}
+                />
+                {touched.isbn && errors.isbn && (
+                  <p className="text-error text-[13px] mt-1">{errors.isbn}</p>
+                )}
+              </div>
 
               {/* Title */}
               <div>
